@@ -1,0 +1,20 @@
+/* public/css/responsive.css */
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        display: flex;
+        justify-content: center;
+    }
+
+    .main-content {
+        margin: 0;
+    }
+
+    .table th, .table td {
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+}
