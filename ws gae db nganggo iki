@@ -1,0 +1,157 @@
+Langkah berikutnya adalah mengintegrasikan struktur dan kode yang telah kita buat serta memastikan bahwa setiap bagian aplikasi berfungsi dengan baik. Berikut ini adalah langkah-langkah penting untuk menghubungkan dan menguji fungsionalitas seluruh sistem:
+
+### 1. **Uji Integrasi dan Koneksi Database**
+
+Pastikan file `config/database.php` terhubung dengan benar ke database. Anda dapat melakukan pengujian sederhana dengan menghubungkan dan menjalankan query dasar untuk memastikan koneksi berhasil.
+
+#### Langkah Pengujian
+
+1. Buat database `sistem_informasi` di MySQL.
+2. Pastikan konfigurasi database (`host`, `username`, `password`, `dbname`) di `config/database.php` sudah benar.
+3. Buat tabel yang diperlukan untuk pengguna (`users`), karyawan (`employees`), kehadiran (`attendance`), dan tugas (`tasks`).
+
+#### Contoh Query SQL untuk Membuat Tabel
+
+```sql
+-- Tabel pengguna (users)
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'user') DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabel karyawan (employees)
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    department VARCHAR(100),
+    job_title VARCHAR(100),
+    hire_date DATE DEFAULT CURRENT_DATE
+);
+
+-- Tabel kehadiran (attendance)
+CREATE TABLE attendance (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    clock_in DATETIME,
+    clock_out DATETIME,
+    FOREIGN KEY (employee_id) REFERENCES employees(id)
+);
+
+-- Tabel tugas (tasks)
+CREATE TABLE tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    task_name VARCHAR(255) NOT NULL,
+    assigned_to INT,
+    due_date DATE,
+    status ENUM('pending', 'completed') DEFAULT 'pending',
+    FOREIGN KEY (assigned_to) REFERENCES employees(id)
+);
+```
+
+### 2. **Menghubungkan Setiap Komponen dan Halaman**
+
+Sekarang, pastikan setiap halaman dapat memuat komponen `header.php`, `sidebar.php`, dan `footer.php`. Cek apakah notifikasi, formulir, dan tabel ditampilkan dengan benar.
+
+1. **Header**: Pastikan `header.php` memuat logo dan nama pengguna jika login.
+2. **Sidebar**: Pastikan navigasi di `sidebar.php` menuju halaman yang benar, seperti `dashboard.php`, `attendance.php`, dll.
+3. **Footer**: Pastikan footer konsisten di seluruh halaman.
+
+### 3. **Autentikasi dan Akses Berdasarkan Peran**
+
+Uji autentikasi pengguna dengan file `login.php` dan pastikan pengguna yang login memiliki akses sesuai dengan perannya.
+
+1. **Login**: Masukkan username dan password yang sesuai untuk login.
+2. **Cek Sesi**: Setelah login, cek apakah sesi `$_SESSION['user_id']` dan `$_SESSION['role']` disetel.
+3. **Akses Role-Based**: Coba akses halaman khusus admin seperti `employee-management.php` menggunakan akun yang tidak memiliki role `admin` untuk memastikan akses ditolak.
+
+### 4. **Uji Fungsi CRUD di Setiap Modul**
+
+Setiap modul di aplikasi (misalnya manajemen karyawan, manajemen kehadiran, dan tugas) harus diuji untuk memastikan semua operasi CRUD (Create, Read, Update, Delete) berfungsi dengan baik.
+
+#### a. Manajemen Karyawan (`employee-management.php`)
+
+1. **Tambah Karyawan**: Gunakan formulir di `employee-management.php` untuk menambah karyawan baru.
+2. **Tampilkan Karyawan**: Pastikan daftar karyawan yang ditampilkan sudah benar.
+3. **Update & Delete (Opsional)**: Jika diperlukan, tambahkan dan uji fitur update dan delete untuk data karyawan.
+
+#### b. Kehadiran (`attendance.php`)
+
+1. **Clock In & Clock Out**: Uji fitur **Clock In** dan **Clock Out** di `attendance.php`.
+2. **Data Kehadiran**: Pastikan waktu kehadiran dicatat dengan benar di tabel `attendance`.
+
+#### c. Tugas (`task-management.php`)
+
+1. **Tambah Tugas**: Uji menambahkan tugas baru di `task-management.php`.
+2. **Tampilkan Tugas**: Pastikan tugas-tugas yang ada ditampilkan dengan benar dan dapat disortir berdasarkan status (pending/completed).
+
+### 5. **Validasi Data dan Keamanan Formulir**
+
+Pastikan setiap input di halaman memiliki validasi yang benar. Cegah serangan seperti **SQL Injection** dan **Cross-Site Scripting (XSS)**.
+
+#### Validasi Data
+
+- Gunakan `htmlspecialchars()` untuk menampilkan data di HTML untuk menghindari XSS.
+- Gunakan `prepared statements` untuk query SQL untuk mencegah SQL Injection.
+
+#### Contoh
+
+```php
+// Validasi input dari pengguna
+$name = htmlspecialchars(strip_tags(trim($_POST['name'])));
+```
+
+### 6. **Implementasi Notifikasi dan Pesan Kesalahan**
+
+Cek apakah notifikasi dan pesan kesalahan bekerja dengan benar di seluruh halaman. Misalnya:
+- Tampilkan notifikasi setelah berhasil menambah karyawan atau tugas.
+- Tampilkan pesan kesalahan jika login gagal atau input tidak valid.
+
+#### Contoh
+
+Di `AuthController.php`:
+
+```php
+if (AuthController::login($username, $password)) {
+    $_SESSION['notification'] = "Login berhasil.";
+} else {
+    $_SESSION['error'] = "Login gagal. Silakan cek username dan password Anda.";
+}
+```
+
+### 7. **Pengujian Rute (Routing) di `routes/web.php`**
+
+Pastikan semua rute di `routes/web.php` berfungsi dan mengarah ke halaman atau controller yang benar.
+
+#### Contoh Pengujian
+
+1. **URL `/login`** harus mengarah ke halaman login.
+2. **URL `/employees`** harus mengarah ke `EmployeeController` untuk menampilkan data karyawan.
+
+### 8. **Pengujian Akhir untuk UI dan Responsivitas**
+
+Pastikan tampilan UI di seluruh aplikasi rapi dan responsif. Periksa apakah halaman terlihat baik di berbagai perangkat dan ukuran layar.
+
+1. **Responsivitas**: Uji tampilan di perangkat seluler dan desktop.
+2. **Komponen Tampilan**: Cek apakah CSS di `style.css` dan `responsive.css` bekerja dengan baik untuk header, sidebar, footer, dan konten utama.
+
+### 9. **Optimasi Keamanan Aplikasi**
+
+- **Sesi yang Aman**: Pastikan sesi dihancurkan dengan benar saat logout.
+- **Pembatasan Akses File**: Pastikan file yang sensitif (seperti konfigurasi) tidak dapat diakses dari luar.
+- **Penggunaan HTTPS**: Gunakan HTTPS jika aplikasi ini akan di-deploy ke server untuk meningkatkan keamanan data.
+
+### 10. **Deployment ke Server**
+
+Jika semua fungsi berjalan dengan baik, Anda dapat mulai melakukan **deployment** ke server live:
+
+1. **Impor Database**: Unggah database `sistem_informasi` ke server menggunakan phpMyAdmin atau sejenisnya.
+2. **Transfer File**: Unggah semua file ke server menggunakan FTP atau tool lainnya.
+3. **Perbarui Konfigurasi Database**: Sesuaikan `config/database.php` agar sesuai dengan pengaturan server.
+4. **Pengaturan HTTPS dan Firewall**: Pastikan aplikasi dilindungi oleh HTTPS, dan aktifkan firewall jika memungkinkan untuk perlindungan tambahan.
+
+---
+
+Dengan langkah-langkah ini, aplikasi seharusnya sudah siap untuk di-deploy. Jika ada langkah yang membutuhkan penjelasan lebih lanjut atau terdapat fitur tambahan yang ingin Anda tambahkan, jangan ragu untuk bertanya!
